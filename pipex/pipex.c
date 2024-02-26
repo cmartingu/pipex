@@ -58,19 +58,58 @@ void	ejecutar(char *envp[], char *path, char *comando)
 	exit(127);
 }
 
+void	first_process(char *name_inf, int pipe_tube[2], char **env, char *cmd)
+{
+	char	*path;
+	int		infile;
+
+	infile = open(name_inf, O_RDONLY); // Abro el infile
+	if (infile < 0)
+	{
+		write(1, "Error, no such file or directory\n", 33);
+		exit(1);
+	}
+	close(pipe_tube[0]);
+	dup2(pipe_tube[1], STDOUT_FILENO);
+	close(pipe_tube[1]);
+	dup2(infile, STDIN_FILENO);
+	close(infile);
+	path = find_path(env, cmd);
+	ejecutar(env, path, cmd);
+	exit(0);
+}
+
+void	second_process(char *name_outf, int pipe_tube[2], char **env, char *cmd)
+{
+	char	*path;
+	int		outfile;
+
+	outfile = open(name_outf, O_RDWR | O_CREAT | O_TRUNC, 0644);
+	if (outfile < 0)
+	{
+		write(1, "Error, outfile error\n", 21);
+		exit(1);
+	}
+	close(pipe_tube[1]);
+	dup2(pipe_tube[0], STDIN_FILENO);
+	close(pipe_tube[0]);
+	dup2(outfile, STDOUT_FILENO);
+    close(outfile); 
+	path = find_path(env, cmd);
+	ejecutar(env, path, cmd);
+	exit(0);
+}
+
 int	main(int argc, char *argv[], char *envp[])
 {
-	int		infile;
-	int		outfile;
 	int		pipe_tube[2];
-	char	*path;
 	int		child1;
 	int		child2;
 	int		status;
 
 	if (argc != 5)
 	{
-		write(1, "Error, insuficient arguments\n", 29);
+		write(1, "Error, you have to put infile, 2 commands ando outfile\n", 55);
 		exit(1);
 	}
 	if (pipe(pipe_tube) == -1)
@@ -79,59 +118,13 @@ int	main(int argc, char *argv[], char *envp[])
 		exit(1);
 	}
 	child1 = fork();
-	if (child1 == 0) // proceso hijo1
-	{
-		close(pipe_tube[0]);
-		dup2(pipe_tube[1], STDOUT_FILENO);
-		close(pipe_tube[1]);
-		infile = open(argv[1], O_RDONLY); // Abro el infile
-		if (infile < 0)
-		{
-			write(1, "Error, infile error\n", 20);
-			exit(1);
-		}
-		dup2(infile, STDIN_FILENO);
-		close(infile);
-		path = find_path(envp, argv[2]);
-		ejecutar(envp, path, argv[2]);
-		exit(0);
-	}
-	else if (child1 > 0) //proceso padre
-	{
-		child2 = fork();
-		if (child2 == 0) // Proceso hijo2
-		{
-			close(pipe_tube[1]);
-			dup2(pipe_tube[0], STDIN_FILENO);
-			close(pipe_tube[0]);
-			outfile = open(argv[4], O_RDWR | O_CREAT | O_TRUNC, 0644); // Abro el outfile
-			if (outfile < 0)
-			{
-				write(1, "Error, outfile error\n", 21);
-				exit(1);
-			}
-			dup2(outfile, STDOUT_FILENO);
-            close(outfile); 
-			path = find_path(envp, argv[3]);
-			ejecutar(envp, path, argv[3]);
-			exit(0);
-		}
-		else if (child2 > 0) // Proceso padre
-		{
-			close(pipe_tube[0]);
-			close(pipe_tube[1]);
-		}
-		else
-		{
-			write(1, "Error al crear el segundo proceso hijo\n", 39);
-			exit(1);
-		}
-	}
-	else
-	{
-		write(2, "Error al crear el proceso hijo\n", 31);
-		exit(1);
-	}
+	if (child1 == 0)
+		first_process(argv[1], pipe_tube, envp, argv[2]);
+	child2 = fork();
+	if (child2 == 0)
+		second_process(argv[4], pipe_tube, envp, argv[3]);
+	close(pipe_tube[0]);
+	close(pipe_tube[1]);
 	waitpid(child1, NULL, 0);
 	waitpid(child2, &status, 0);
 	return (WEXITSTATUS(status));
