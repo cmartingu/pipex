@@ -12,7 +12,7 @@
 
 NAME = pipex
 
-SRC = pipex.c
+SRC = pipex.c path.c exe_process.c
 
 OBJ = $(SRC:.c=.o)
 
@@ -36,3 +36,5 @@ fclean: clean
 		$(REMOVE) $(NAME)
 
 re: fclean all
+
+.PHONY: all clean fclean re 

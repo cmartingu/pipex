@@ -1,9 +1,0 @@
-total 48
-drwxrwxrwx+ 2 codespace root       4096 Feb 26 19:01 Libft
--rw-rw-rw-  1 codespace root       1216 Feb 26 18:12 Makefile
--rw-rw-rw-  1 codespace root         22 Feb 26 18:12 infile
--rw-rw-rw-  1 codespace root          0 Feb 26 19:02 outfile
--rwxrwxrwx  1 codespace codespace 17768 Feb 26 19:02 pipex
--rw-rw-rw-  1 codespace root       3738 Feb 26 19:02 pipex.c
--rw-rw-rw-  1 codespace root       1088 Feb 26 18:12 pipex.h
--rw-rw-rw-  1 codespace codespace  5400 Feb 26 19:02 pipex.o
